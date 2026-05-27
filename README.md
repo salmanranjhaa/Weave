@@ -1,8 +1,8 @@
-# ERP-RAG — Enterprise Intelligence Platform
+# Weave — Enterprise Intelligence Platform
 
 A production-grade, multi-source AI intelligence system for enterprise ERP data. The platform ships two agents that share the same data infrastructure:
 
-- **ERP-RAG** (port 8000) — multi-source RAG router using LlamaIndex selector
+- **Weave** (port 8000) — multi-source RAG router using LlamaIndex selector
 - **STRATA** (port 8001) — autonomous ReACT agent with step-by-step reasoning
 
 Both agents query across structured databases, unstructured conversational logs, and an organizational graph through a conversational interface with voice support.
@@ -30,7 +30,7 @@ Example queries both agents can handle:
 
 ## Two Agents, One Data Layer
 
-### ERP-RAG (v1) — RAG Router
+### Weave (v1) — RAG Router
 
 A fast, single-pass routing engine. Given a query, it selects the best data source(s) and returns a synthesized answer. Best for direct lookups.
 
@@ -57,7 +57,7 @@ Both agents run simultaneously and share the same Postgres, Neo4j, and ChromaDB 
 │                          GCP Compute Engine VM                        │
 │                                                                        │
 │  ┌─────────────────────────┐    ┌─────────────────────────┐           │
-│  │  ERP-RAG  :8000          │    │  STRATA  :8001           │           │
+│  │  Weave  :8000          │    │  STRATA  :8001           │           │
 │  │  (RAG Router)            │    │  (ReACT Agent)           │           │
 │  │  src/agent/router.py     │    │  src/claw/main.py        │           │
 │  └────────────┬────────────┘    └────────────┬────────────┘           │
@@ -88,7 +88,7 @@ Both agents run simultaneously and share the same Postgres, Neo4j, and ChromaDB 
 - Multi-turn conversation with history condensation
 - Fully Dockerized — `docker compose up` starts everything
 
-**ERP-RAG specific:**
+**Weave specific:**
 - Multi-source parallel synthesis via `LLMMultiSelector`
 - Real-time routing logs in the side panel
 
@@ -119,11 +119,11 @@ Both agents run simultaneously and share the same Postgres, Neo4j, and ChromaDB 
 ## Project Structure
 
 ```
-erp-rag/
+Weave/
 ├── src/
-│   ├── agent/                         # ERP-RAG v1 (port 8000)
+│   ├── agent/                         # Weave v1 (port 8000)
 │   │   ├── router.py                  # FastAPI app + LlamaIndex routing engine
-│   │   └── public/                    # ERP-RAG frontend
+│   │   └── public/                    # Weave frontend
 │   ├── claw/                          # STRATA v2 (port 8001)
 │   │   ├── main.py                    # FastAPI app + ReACT agent
 │   │   └── public/                    # STRATA frontend (HTML/CSS/JS)
@@ -138,7 +138,7 @@ erp-rag/
 │       ├── users.json                 # 65 employees
 │       ├── tickets.json               # 50+ Agile tickets
 │       └── messages.json              # 120+ Slack messages
-├── Dockerfile                         # ERP-RAG app image
+├── Dockerfile                         # Weave app image
 ├── Dockerfile.claw                    # STRATA agent image
 ├── docker-compose.yml                 # All services
 ├── requirements.txt
@@ -159,8 +159,8 @@ erp-rag/
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/salmanranjhaa/ERP-RAG.git
-cd ERP-RAG
+git clone https://github.com/salmanranjhaa/Weave.git
+cd Weave
 
 cp .env.example .env
 # Open .env and set your GROQ_API_KEY
@@ -182,7 +182,7 @@ docker compose run --rm app python src/ingestion/embed_data.py
 docker compose run --rm app python src/ingestion/setup_neo4j.py
 ```
 
-### 4. Start ERP-RAG (v1)
+### 4. Start Weave (v1)
 
 ```bash
 docker compose build app
@@ -225,7 +225,7 @@ CHROMA_PATH=/app/chroma_data
 
 # Database connection strings
 # Use Docker service names inside Docker, localhost outside
-POSTGRES_URI=postgresql://admin:adminpassword@postgres:5432/erp_database
+POSTGRES_URI=postgresql://admin:adminpassword@postgres:5432/weave_db
 MONGO_URI=mongodb://admin:adminpassword@mongodb:27017/
 NEO4J_URI=bolt://neo4j:7687
 NEO4J_USER=neo4j
@@ -248,8 +248,8 @@ sudo usermod -aG docker $USER && newgrp docker
 sudo apt-get install -y docker-compose-plugin git
 
 # Clone and configure
-git clone https://github.com/salmanranjhaa/ERP-RAG.git
-cd ERP-RAG
+git clone https://github.com/salmanranjhaa/Weave.git
+cd Weave
 # Create .env with your GROQ_API_KEY
 
 # Start databases and ingest data
@@ -258,7 +258,7 @@ docker compose run --rm app python src/ingestion/setup_dbs.py
 docker compose run --rm app python src/ingestion/embed_data.py
 docker compose run --rm app python src/ingestion/setup_neo4j.py
 
-# Start ERP-RAG
+# Start Weave
 docker compose build app && docker compose up -d app
 
 # Start STRATA
@@ -267,7 +267,7 @@ docker compose build openclaw && docker compose up -d openclaw
 
 Open firewall ports:
 ```bash
-gcloud compute firewall-rules create erp-rag-ports \
+gcloud compute firewall-rules create Weave-ports \
   --project="YOUR_PROJECT" \
   --allow="tcp:8000,tcp:8001,tcp:5050,tcp:8081,tcp:7474" \
   --source-ranges=0.0.0.0/0
@@ -291,7 +291,7 @@ Both agents expose the same endpoint contract.
 }
 ```
 
-**ERP-RAG response:**
+**Weave response:**
 ```json
 {
   "query": "...",
