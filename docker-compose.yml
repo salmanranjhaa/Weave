@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: adminpassword
       POSTGRES_DB: erp_database
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -28,7 +28,7 @@ services:
       PGADMIN_CONFIG_X_FRAME_OPTIONS: "'ALLOWALL'"
       PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     depends_on:
       - postgres
     restart: unless-stopped
@@ -40,7 +40,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: adminpassword
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongodb_data:/data/db
     restart: unless-stopped
@@ -60,7 +60,7 @@ services:
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: adminpassword
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     depends_on:
       - mongodb
     restart: unless-stopped
@@ -71,8 +71,8 @@ services:
     environment:
       NEO4J_AUTH: neo4j/adminpassword
     ports:
-      - "7474:7474" # HTTP
-      - "7687:7687" # Bolt
+      - "127.0.0.1:7474:7474" # HTTP
+      - "127.0.0.1:7687:7687" # Bolt
     volumes:
       - neo4j_data:/data
     restart: unless-stopped
@@ -85,6 +85,9 @@ services:
   app:
     build: .
     container_name: erp-rag-app
+    networks:
+      - default
+      - lifeplan-net
     ports:
       - "8000:8000"
     environment:
@@ -110,6 +113,9 @@ services:
       context: .
       dockerfile: Dockerfile.claw
     container_name: erp-openclaw
+    networks:
+      - default
+      - lifeplan-net
     ports:
       - "8001:8001"
     environment:
@@ -135,3 +141,11 @@ volumes:
   mongodb_data:
   neo4j_data:
   chroma_data:
+
+networks:
+  # Default project network (erp-rag_default) keeps the DB/app tier together.
+  default:
+  # Shared with the infra Caddy container (infra-frontend-1) so it can reverse
+  # proxy erp-rag-app:8000 / erp-openclaw:8001 for the sslip.io HTTPS hostnames.
+  lifeplan-net:
+    external: true

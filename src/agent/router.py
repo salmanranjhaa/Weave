@@ -15,47 +15,18 @@ from llama_index.core.tools import QueryEngineTool
 from llama_index.core.agent import ReActAgent
 
 # Models
-from llama_index.llms.groq import Groq
+from src.common.vertex_llm import VertexGeminiLLM
+from src.common.chroma_compat import apply_chroma_empty_filter_fix
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core import Settings
 
 # Load env variables
 load_dotenv()
 
-# --- Custom Model Fallback Logic ---
-class GroqWithFallback(Groq):
-    """Custom Groq wrapper to handle rate-limit fallbacks between Kimi and Llama."""
-    def chat(self, messages, **kwargs):
-        try:
-            return super().chat(messages, **kwargs)
-        except Exception as e:
-            if "rate_limit" in str(e).lower() or "429" in str(e):
-                original = self.model
-                fallback = "llama-3.3-70b-versatile" if original == "moonshotai/kimi-k2-instruct-0905" else "moonshotai/kimi-k2-instruct-0905"
-                print(f"\n[RATE LIMIT] {original} hit. Falling back to {fallback}...")
-                self.model = fallback
-                try:
-                    return super().chat(messages, **kwargs)
-                finally:
-                    self.model = original
-            raise e
+# chromadb 0.5.x rejects empty where={}; make unfiltered vector search work
+apply_chroma_empty_filter_fix()
 
-    def complete(self, prompt, **kwargs):
-        try:
-            return super().complete(prompt, **kwargs)
-        except Exception as e:
-            if "rate_limit" in str(e).lower() or "429" in str(e):
-                original = self.model
-                fallback = "llama-3.3-70b-versatile" if original == "moonshotai/kimi-k2-instruct-0905" else "moonshotai/kimi-k2-instruct-0905"
-                print(f"\n[RATE LIMIT] {original} hit. Falling back to {fallback}...")
-                self.model = fallback
-                try:
-                    return super().complete(prompt, **kwargs)
-                finally:
-                    self.model = original
-            raise e
-
-app = FastAPI(title="ERP RAG Agent Router", description="Conversational RAG using Groq and LlamaIndex")
+app = FastAPI(title="ERP RAG Agent Router", description="Conversational RAG using Vertex AI (Gemini) and LlamaIndex")
 
 # Serve frontend directly from backend
 public_dir = os.path.join(os.path.dirname(__file__), "public")
@@ -71,11 +42,10 @@ router_query_engine = None
 def initialize_engines():
     global router_query_engine
     
-    print("Initializing Models (Groq Model Path: Kimi -> Llama Fallback)...")
-    # Set up models
-    # Primary: moonshotai/kimi-k2-instruct-0905 (Optimized for routing)
-    # Fallback: llama-3.3-70b-versatile (Blazing fast fallback)
-    llm = GroqWithFallback(model="moonshotai/kimi-k2-instruct-0905", api_key=os.environ.get("GROQ_API_KEY"))
+    print("Initializing Models (Vertex AI Gemini via ADC, with model/region fallback)...")
+    # Primary: gemini-2.0-flash-001 (europe-west6), falling back across
+    # gemini-2.5-flash / gemini-1.5-flash and the us-central1 region.
+    llm = VertexGeminiLLM.from_env()
     embed_model = HuggingFaceEmbedding(model_name="all-MiniLM-L6-v2")
     
     # Global settings

@@ -27,59 +27,26 @@ class ChatRequest(BaseModel):
     history: List[dict] = []
 
 
-# ─── LLM with Fallback ────────────────────────────────────────────────────────
-class GroqWithFallback:
-    def __init__(self, api_key: str):
-        from llama_index.llms.groq import Groq
-        self.primary = Groq(model="moonshotai/kimi-k2-instruct", api_key=api_key, temperature=0.1)
-        self.fallback = Groq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.1)
-        self._active = self.primary
-
-    def complete(self, prompt: str):
-        try:
-            return self._active.complete(prompt)
-        except Exception as e:
-            if "rate" in str(e).lower() or "429" in str(e):
-                self._active = self.fallback
-                return self._active.complete(prompt)
-            raise
-
-    def chat(self, messages):
-        try:
-            return self._active.chat(messages)
-        except Exception as e:
-            if "rate" in str(e).lower() or "429" in str(e):
-                self._active = self.fallback
-                return self._active.chat(messages)
-            raise
-
-    # Proxy all other attributes to the active LLM
-    def __getattr__(self, name):
-        return getattr(self._active, name)
-
-
 # ─── Agent Initialization ─────────────────────────────────────────────────────
 def initialize_claw_agent():
     from llama_index.core import Settings, SQLDatabase, VectorStoreIndex
     from llama_index.core.query_engine import NLSQLTableQueryEngine, CustomQueryEngine
     from llama_index.core.tools import QueryEngineTool
     from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-    from llama_index.llms.groq import Groq
+    from src.common.vertex_llm import VertexGeminiLLM
+    from src.common.chroma_compat import apply_chroma_empty_filter_fix
     from sqlalchemy import create_engine
     import chromadb
 
-    # ── Agent import ────────────────────────────────────────────────────────────────
-    # LlamaIndex 0.12+ uses direct instantiation — no from_tools classmethod
+    # chromadb 0.5.x rejects empty where={}; make unfiltered vector search work
+    apply_chroma_empty_filter_fix()
+
+    # ── Agent import ──────────────────────────────────────────────────────────
+    # llama-index-core 0.11.x: build via ReActAgent.from_tools (handles memory).
     from llama_index.core.agent import ReActAgent
 
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise RuntimeError("GROQ_API_KEY is not set")
-
-    # LLM
-    primary_llm = Groq(model="moonshotai/kimi-k2-instruct", api_key=api_key, temperature=0.1)
-    fallback_llm = Groq(model="llama-3.3-70b-versatile", api_key=api_key, temperature=0.1)
-    active_llm = primary_llm
+    # LLM — Vertex AI Gemini via ADC, with model/region fallback
+    active_llm = VertexGeminiLLM.from_env()
 
     embed_model = HuggingFaceEmbedding(model_name="all-MiniLM-L6-v2")
     Settings.embed_model = embed_model
@@ -212,16 +179,10 @@ Relationships:
         )
     )
 
-    # ── Build agent (LlamaIndex 0.12.x workflow API) ───────────────────────
+    # ── Build agent (llama-index-core 0.11.x) ─────────────────────────────────
     _tools = [sql_tool, chroma_tool, neo4j_tool, general_tool]
-    _system_prompt = (
-        "You are STRATA — an autonomous enterprise intelligence agent. "
-        "You have access to structured ERP data (SQL), conversational Slack logs (vectors), "
-        "and an organizational graph (Neo4j). Reason step by step, use multiple tools when needed, "
-        "and synthesize a comprehensive final answer. Always explain your reasoning chain."
-    )
 
-    agent = ReActAgent(
+    agent = ReActAgent.from_tools(
         tools=_tools,
         llm=active_llm,
         verbose=True,
@@ -309,35 +270,24 @@ async def chat(request: ChatRequest):
 
     condensed = condense_query(request.query, request.history, llm)
 
-    import io, sys
+    import io, sys, asyncio
     old_stdout = sys.stdout
     sys.stdout = captured = io.StringIO()
 
     try:
-        # LlamaIndex 0.12.x: ReActAgent.run() is async
-        response = await react_agent.run(condensed)
+        # llama-index-core 0.11.x: ReActAgent.chat() is sync — run it off the
+        # event loop so the verbose ReAct trace is captured from stdout.
+        response = await asyncio.get_event_loop().run_in_executor(
+            None, react_agent.chat, condensed
+        )
         sys.stdout = old_stdout
 
         verbose_output = captured.getvalue()
         reasoning_steps = parse_verbose_trace(verbose_output)
 
-        # LlamaIndex 0.12.x: AgentOutput.response is a ChatMessage object
-        # Extract the text content from whatever structure we get
-        if hasattr(response, 'response'):
-            r = response.response
-            # ChatMessage has .content
-            if hasattr(r, 'content'):
-                response_text = r.content or str(r)
-            elif isinstance(r, str):
-                response_text = r
-            else:
-                response_text = str(r)
-        elif hasattr(response, 'output'):
-            o = response.output
-            if hasattr(o, 'content'):
-                response_text = o.content or str(o)
-            else:
-                response_text = str(o)
+        # AgentChatResponse.response is the final answer string
+        if hasattr(response, 'response') and response.response is not None:
+            response_text = str(response.response)
         else:
             response_text = str(response)
 
