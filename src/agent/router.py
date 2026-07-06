@@ -60,7 +60,13 @@ def initialize_engines():
     sql_query_engine = NLSQLTableQueryEngine(
         sql_database=sql_database,
         tables=["users", "tickets", "ticket_blockers"],
-        llm=llm
+        llm=llm,
+        context_str_prefix=(
+            "When filtering text columns, always use case-insensitive matching with short single "
+            "keywords, e.g. title ILIKE '%FDA%'. Never use case-sensitive LIKE or long multi-word "
+            "phrases: a search for 'FDA compliance' must still match a title like "
+            "'FDA 21 CFR Part 11 Compliance Audit'.\n"
+        )
     )
     
     # 2. Chroma Setup (Unstructured Data)

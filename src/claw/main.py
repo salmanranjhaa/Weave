@@ -73,6 +73,10 @@ def initialize_claw_agent():
             "status values: Open, In Progress, In Review, Blocked, Done. "
             "priority values: Critical, High, Medium, Low.\n"
             "- ticket_blockers(blocker_id, ticket_id, blocked_by_ticket_id): links blocking relationships.\n"
+            "When filtering text columns, always use case-insensitive matching with short single "
+            "keywords, e.g. title ILIKE '%FDA%'. Never use case-sensitive LIKE or long multi-word "
+            "phrases: a search for 'FDA compliance' must still match a title like "
+            "'FDA 21 CFR Part 11 Compliance Audit'.\n"
         )
     )
     sql_tool = QueryEngineTool.from_defaults(
@@ -81,7 +85,8 @@ def initialize_claw_agent():
         description=(
             "Query structured company data: employees (name, role, department, salary, manager), "
             "tickets (status, priority, type, assignee, reporter, sprint), and blocker relationships. "
-            "Use for questions about people, org hierarchy, ticket status, or workload distribution."
+            "Use for questions about people, org hierarchy, ticket status, or workload distribution. "
+            "Pass a plain-English question as input, never raw SQL."
         )
     )
 
