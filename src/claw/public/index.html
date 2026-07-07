@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>STRATA — Intelligence Layer</title>
+  <title>STRATA · ReAct Agent</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -749,22 +750,16 @@
         <div class="nav-item active" data-view="console">
           <span class="nav-pip pip-red"></span>Agent console
         </div>
-        <div class="nav-item cl-blue" data-view="postgres">
-          <span class="nav-pip pip-blue"></span>Postgres SQL
-        </div>
-        <div class="nav-item cl-green" data-view="neo4j">
-          <span class="nav-pip pip-green"></span>Neo4j graph
-        </div>
-        <div class="nav-item cl-purple" data-view="slack">
-          <span class="nav-pip pip-purple"></span>Slack vectors
-        </div>
       </nav>
 
       <nav class="nav-section">
-        <div class="nav-label">FEDERATION</div>
-        <div class="nav-item" data-view="erp">
-          <span class="nav-pip pip-dim"></span>ERP router
+        <div class="nav-label">AGENTS</div>
+        <div class="nav-item active">
+          <span class="nav-pip pip-red"></span>STRATA
         </div>
+        <a class="nav-item" href="https://weave.salmanranjha.me" style="text-decoration:none;">
+          <span class="nav-pip pip-blue"></span>Switch to Weave
+        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -783,7 +778,7 @@
           <span class="breadcrumb-sep">/</span>
           <span class="breadcrumb-active" id="breadcrumb-active">Agent console</span>
         </div>
-        <div class="model-badge">Kimi K2 &middot; Groq</div>
+        <div class="model-badge">Gemini 2.5 Flash &middot; Vertex AI</div>
       </div>
 
       <!-- I am rendering the welcome/home view -->
@@ -950,7 +945,7 @@
         const r = await fetch('/health');
         const d = await r.json();
         if (d.ready) {
-          fleetText.innerHTML = '<span class="fleet-dot"></span>Fleet online &middot; Groq LPU';
+          fleetText.innerHTML = '<span class="fleet-dot"></span>Fleet online &middot; Vertex AI';
         } else {
           fleetText.innerHTML = '<span class="fleet-dot"></span>Initializing...';
           setTimeout(checkHealth, 3000);
@@ -963,10 +958,13 @@
     checkHealth();
 
     // ── Nav ──────────────────────────────────────────────────
-    const navLabels = { console: 'Agent console', postgres: 'Postgres SQL', neo4j: 'Neo4j graph', slack: 'Slack vectors', erp: 'ERP router' };
-    navItems.forEach(item => {
+    // Only view-bearing items switch the console; the AGENTS switcher links
+    // (no data-view) navigate to the sibling app and must keep their own state.
+    const navLabels = { console: 'Agent console' };
+    const viewItems = document.querySelectorAll('.nav-item[data-view]');
+    viewItems.forEach(item => {
       item.addEventListener('click', () => {
-        navItems.forEach(n => n.classList.remove('active'));
+        viewItems.forEach(n => n.classList.remove('active'));
         item.classList.add('active');
         breadcrumb.textContent = navLabels[item.dataset.view] || 'Agent console';
       });
