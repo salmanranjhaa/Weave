@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Enterprise AI RAG Dashboard</title>
+    <title>Weave · Enterprise RAG</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <!-- Modern Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
@@ -28,10 +29,6 @@
                 <span>Enterprise Tooling</span>
                 <ul id="sidebar-nav">
                     <li class="active" data-view="agent"><i data-lucide="message-square"></i> Agent Console</li>
-                    <li data-view="postgres"><i data-lucide="database"></i> Postgres SQL</li>
-                    <li data-view="mongo"><i data-lucide="server"></i> MongoDB Logs</li>
-                    <li data-view="neo4j"><i data-lucide="network"></i> Neo4j Graph</li>
-                    <li data-view="chroma"><i data-lucide="activity"></i> Chroma Vectors</li>
                 </ul>
             </div>
 
@@ -39,7 +36,7 @@
                 <div class="status-indicator"></div>
                 <div class="status-text">
                     <span class="status-title">System Status</span>
-                    <span class="status-detail">Groq LPU Array Online</span>
+                    <span class="status-detail">Vertex AI · Online</span>
                 </div>
             </div>
         </aside>
@@ -53,8 +50,8 @@
                         <h1>Enterprise Data Intelligence</h1>
                         <p>Synthesizing structured DBs and unstructured logs.</p>
                     </div>
-                    <div class="model-badge" title="Primary: Kimi K2 Instruct | Fallback: Llama 3.3 (Rate Limit Protection)">
-                        <i data-lucide="zap"></i> Kimi K2 Instruct (Groq)
+                    <div class="model-badge" title="Primary: Gemini 2.5 Flash | Fallback: Gemini 2.5 Flash Lite (via Vertex AI)">
+                        <i data-lucide="zap"></i> Gemini 2.5 Flash (Vertex AI)
                     </div>
                 </header>
 
@@ -90,57 +87,6 @@
                 </div>
             </main>
 
-            <!-- Console Views -->
-            <div id="view-postgres" class="console-view" style="display: none;">
-                <div class="console-header glass-panel">
-                    <div class="title-group">
-                        <i data-lucide="database"></i> Postgres SQL Console
-                    </div>
-                    <a href="http://localhost:5050" target="_blank" class="external-link-btn" title="Open in New Tab">
-                        <i data-lucide="external-link"></i>
-                    </a>
-                </div>
-                <iframe src="http://localhost:5050" class="console-iframe"></iframe>
-            </div>
-
-            <div id="view-mongo" class="console-view" style="display: none;">
-                <div class="console-header glass-panel">
-                    <div class="title-group">
-                        <i data-lucide="server"></i> MongoDB Logs Console
-                    </div>
-                    <a href="http://localhost:8081" target="_blank" class="external-link-btn" title="Open in New Tab">
-                        <i data-lucide="external-link"></i>
-                    </a>
-                </div>
-                <iframe src="http://localhost:8081" class="console-iframe"></iframe>
-            </div>
-
-            <div id="view-neo4j" class="console-view" style="display: none;">
-                <div class="console-header glass-panel">
-                    <div class="title-group">
-                        <i data-lucide="network"></i> Neo4j Graph Console
-                    </div>
-                    <a href="http://localhost:7474" target="_blank" class="external-link-btn" title="Open in New Tab">
-                        <i data-lucide="external-link"></i>
-                    </a>
-                </div>
-                <iframe src="http://localhost:7474" class="console-iframe"></iframe>
-            </div>
-
-            <div id="view-chroma" class="console-view" style="display: none;">
-                <div class="console-header glass-panel">
-                    <i data-lucide="activity"></i> Chroma Vector Explorer
-                </div>
-                <div class="mock-console glass-panel">
-                    <div class="log-detail">
-                        Connecting to local Chroma server...<br>
-                        Fetching collection: messages_index...<br>
-                        Indexing Status: OPTIMIZED<br>
-                        Embedding Model: all-MiniLM-L6-v2<br>
-                        Total Elements: ~120 Slack messages
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Context Metdata Panel -->
