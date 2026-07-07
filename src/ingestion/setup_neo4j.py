@@ -97,6 +97,7 @@ class ERPGraph:
                         MATCH (blocked:Ticket {ticket_id: $ticket_id})
                         MATCH (blocker:Ticket {ticket_id: $blocker_id})
                         CREATE (blocked)-[:BLOCKED_BY]->(blocker)
+                        CREATE (blocker)-[:BLOCKS]->(blocked)
                     ''', ticket_id=t['ticket_id'], blocker_id=blocker_id)
 
 def main():

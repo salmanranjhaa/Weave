@@ -126,9 +126,14 @@ Relationships:
 - (Person)-[:WORKS_IN]->(Department)
 - (Person)-[:REPORTS_TO]->(Person)
 - (Person)-[:ASSIGNED_TO]->(Ticket)
-- (Ticket)-[:BLOCKED_BY]->(Ticket)
+- (Ticket)-[:BLOCKS]->(Ticket)
 - (Ticket)-[:CURRENT_STATUS]->(Status)
 - (Ticket)-[:ASSIGNED_TO_SPRINT]->(Sprint)
+
+For blocker questions always use BLOCKS, which reads in natural direction:
+(a)-[:BLOCKS]->(b) means a blocks b, so a is the blocker of b.
+"Who is blocking X": MATCH (blocker:Ticket)-[:BLOCKS]->(x:Ticket {ticket_id:'X'}) RETURN blocker
+"Which tickets does X block": MATCH (x:Ticket {ticket_id:'X'})-[:BLOCKS]->(t:Ticket) RETURN t
 """
 
     class Neo4jQueryEngine(CustomQueryEngine):
